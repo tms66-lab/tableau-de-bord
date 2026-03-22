@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { db } from "./firebase";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 const CATEGORIES = ["Boulot", "Side Job", "Pyrénées", "Travaux Maison", "Finances"];
 const STATUSES = ["À commencer", "En cours", "Bloqué", "Terminé"];
@@ -39,17 +41,7 @@ const DEFAULT_CAPTURES = [
   { id: 2, text: "Comparer assurances PNO pour LMNP", done: false },
   { id: 3, text: "Idée article blog : retour d'XP pixel art RPG", done: false },
 ];
-const STORAGE_KEY = "dashboard-data";
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-function saveData(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
-}
+const DOC_REF = () => doc(db, "dashboard", "main");
 
 function StatusBadge({ status, onClick }) {
   const c = STATUS_COLORS[status];
@@ -344,21 +336,34 @@ function OverviewBar({ projects }) {
   );
 }
 export default function Dashboard() {
-  const [projects, setProjects] = useState(() => {
-    const saved = loadData();
-    return saved?.projects ?? DEFAULT_PROJECTS;
-  });
-  const [captures, setCaptures] = useState(() => {
-    const saved = loadData();
-    return saved?.captures ?? DEFAULT_CAPTURES;
-  });
+  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
+  const [captures, setCaptures] = useState(DEFAULT_CAPTURES);
   const [activeTab, setActiveTab] = useState("all");
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const [synced, setSynced] = useState(false);
+  const remoteUpdate = useRef(false);
 
+  // Écoute Firestore en temps réel
   useEffect(() => {
-    saveData({ projects, captures });
-  }, [projects, captures]);
+    const unsub = onSnapshot(DOC_REF(), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        remoteUpdate.current = true;
+        if (data.projects) setProjects(data.projects);
+        if (data.captures) setCaptures(data.captures);
+      }
+      setSynced(true);
+    });
+    return () => unsub();
+  }, []);
+
+  // Sauvegarde dans Firestore à chaque changement (sauf si c'est Firestore qui a déclenché)
+  useEffect(() => {
+    if (!synced) return;
+    if (remoteUpdate.current) { remoteUpdate.current = false; return; }
+    setDoc(DOC_REF(), { projects, captures });
+  }, [projects, captures, synced]);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -503,7 +508,9 @@ export default function Dashboard() {
           </div>
         )}
         <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #E2E8F0", textAlign: "center" }}>
-          <span style={{ fontSize: 11, color: "#CBD5E0" }}>Données sauvegardées automatiquement entre sessions</span>
+          <span style={{ fontSize: 11, color: "#CBD5E0" }}>
+            {synced ? "☁️ Synchronisé — accès depuis tous tes appareils" : "⏳ Connexion…"}
+          </span>
         </div>
       </div>
     </div>

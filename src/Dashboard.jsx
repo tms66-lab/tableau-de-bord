@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db } from "./firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import RecipeApp from "./RecipeApp";
 
 const CATEGORIES = ["Boulot", "Side Job", "Pyrénées", "Travaux Maison", "Finances"];
 const STATUSES = ["À commencer", "En cours", "Bloqué", "Terminé"];
@@ -408,6 +409,7 @@ export default function Dashboard() {
     { key: "Pyrénées", label: "Pyrénées", icon: "🏔️" },
     { key: "Travaux Maison", label: "Travaux", icon: "🏠" },
     { key: "Finances", label: "Finances", icon: "💰" },
+    { key: "recettes", label: "Recettes", icon: "✿" },
   ];
   return (
     <div style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
@@ -507,6 +509,7 @@ export default function Dashboard() {
             <SimpleList projects={filterByCat("Finances")} onCycleStatus={cycleStatus} onEdit={openEdit} />
           </div>
         )}
+        {activeTab === "recettes" && <RecipeApp />}
         <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #E2E8F0", textAlign: "center" }}>
           <span style={{ fontSize: 11, color: "#CBD5E0" }}>
             {synced ? "☁️ Synchronisé — accès depuis tous tes appareils" : "⏳ Connexion…"}

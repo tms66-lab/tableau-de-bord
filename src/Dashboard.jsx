@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { db } from "./firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import RecipeApp from "./RecipeApp";
+import PumpScanner from "./PumpScanner";
 
 const CATEGORIES = ["Boulot", "Side Job", "Pyrénées", "Travaux Maison", "Finances"];
 const STATUSES = ["À commencer", "En cours", "Bloqué", "Terminé"];
@@ -410,6 +411,7 @@ export default function Dashboard() {
     { key: "Travaux Maison", label: "Travaux", icon: "🏠" },
     { key: "Finances", label: "Finances", icon: "💰" },
     { key: "recettes", label: "Recettes", icon: "✿" },
+    { key: "pump", label: "Pump.fun", icon: "🪙" },
   ];
   return (
     <div style={{ minHeight: "100vh", background: "#F8F9FA", fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}>
@@ -510,6 +512,7 @@ export default function Dashboard() {
           </div>
         )}
         {activeTab === "recettes" && <RecipeApp />}
+        {activeTab === "pump" && <PumpScanner />}
         <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #E2E8F0", textAlign: "center" }}>
           <span style={{ fontSize: 11, color: "#CBD5E0" }}>
             {synced ? "☁️ Synchronisé — accès depuis tous tes appareils" : "⏳ Connexion…"}
